@@ -33,10 +33,17 @@ check_err_exit ${library_path} "Failed to create build directory"
 cd ${build_path}
 check_err_exit ${library_path} "Failed to enter build directory"
 
+# CRITICAL: Pass C++17 to configure so Makefile is generated with correct flags
+# Breakpad requires C++14+ for std::make_unique and std::string_view
+CXXFLAGS="-std=c++17 ${CXX_FLAGS} -static-libgcc -static-libstdc++" \
+CFLAGS="${C_FLAGS}" \
 ../../configure --prefix=`pwd`
-check_err_exit ${library_path} "Failed to configure"
-make CXXFLAGS="-std=c++11 ${CXX_FLAGS} -static-libgcc -static-libstdc++" CFLAGS="${C_FLAGS}" ${MAKE_OPTIONS}
-check_err_exit ${library_path} "Failed to build"
+check_err_exit ${library_path} "Breakpad configure failed"
+
+# Build with the flags from configure
+make ${MAKE_OPTIONS}
+check_err_exit ${library_path} "Breakpad compilation failed with C++17"
+
 make install
 check_err_exit ${library_path} "Failed to install"
 cd ../../../
